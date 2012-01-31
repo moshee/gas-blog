@@ -7,6 +7,7 @@ Everything you see here is very much a work in progress and probably does not wo
 
 ## Working ideas
 All plugins should begin with its name, much like any Go package, and import the `gas` package.
+
 ```go
 package blog
 
