@@ -1,0 +1,10 @@
+<!doctype html>
+<meta charset=utf-8>
+<title>503 Service Unavailable</title>
+<link rel=stylesheet href=/assets/blog.css>
+<article class=error-503>
+<hgroup>
+<h1>You were looking for {{.}}?</h1>
+<h2>Well, I won't give it to you.</h2>
+</hgroup>
+</article>
