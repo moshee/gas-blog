@@ -14,6 +14,9 @@ package blog
 import "gas"
 ```
 
+### Templating
+HTML templates should be referred to like importing packages (like `g.Render("blog/index", post)`). Templates are kept in the `html` directory for each plugin for modular-ness, but the `html/` should be left out when referring to them in code. File extension should also be ignored.
+
 ### Dependencies
 This package makes use of [gopgsqldriver](https://github.com/jbarham/gopgsqldriver) in conjunction with Go's `database/sql` package. It'll require a fixed version of jbarham's driver to work with the latest weekly build of Go. Attempting to build his package will make it obvious enough what to fix. There's a pull request for this fix already waiting.
 

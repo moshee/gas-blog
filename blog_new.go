@@ -11,10 +11,6 @@ import (
 	"../gas/gas"
 )
 
-func init() {
-	gas.RegisterTemplates("blog/index", "blog/onepost", "blog/503")
-}
-
 type Post struct {
 	Id		int64
 	Time	time.Time
@@ -30,17 +26,17 @@ func db() *sql.DB {
 	return database
 }
 
-func Post(g gas.Request, id int64) {
+func Post(g *gas.Request, id int64) {
 	row := db().QueryRow("SELECT * FROM posts WHERE id = ?", id)
 	post := &Post{}
 	if err = row.Scan(&post.Id, &post.Time, &post.Title, &post.Body); err != nil {
 		gas.HTTPError(http.ErrorServiceUnavailable)
 	}
 
-	gas.Render("onepost", post)
+	g.Render("onepost", post)
 }
 
-func Page(g gas.Request, page int) {
+func Page(g *gas.Request, page int) {
 	rows, err := db().Query("SELECT * FROM posts ORDER BY id DESC OFFSET ? LIMIT 10", page*10)
 	if err != nil {
 		println("blog.Page():", err.Error)
@@ -55,10 +51,10 @@ func Page(g gas.Request, page int) {
 		}
 	}
 
-	gas.Render("blog/index", posts)
+	g.Render("blog/index", posts)
 }
 
-func Index(g gas.Request) {
+func Index(g *gas.Request) {
 	rows, err := db().Query("SELECT * FROM posts ORDER BY id DESC LIMIT 10")
 	if err != nil {
 		println("blog.Index():", err.Error)
@@ -73,6 +69,6 @@ func Index(g gas.Request) {
 		}
 	}
 
-	gas.Render("blog/index", posts)
+	g.Render("blog/index", posts)
 }
 
