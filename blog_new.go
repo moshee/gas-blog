@@ -24,8 +24,8 @@ func db() *sql.DB {
 	return database
 }
 
-func SinglePost(g *gas.Gas, id string) {
-	row := db().QueryRow("SELECT * FROM posts WHERE id = ?", id)
+func SinglePost(g *gas.Gas, postId string) {
+	row := db().QueryRow("SELECT * FROM posts WHERE id = ?", postId)
 
 	var (
 		id		int64
@@ -34,7 +34,7 @@ func SinglePost(g *gas.Gas, id string) {
 		body	string
 	)
 
-	err = row.Scan(&id, &stamp, &title, &body)
+	err := row.Scan(&id, &stamp, &title, &body)
 	if err != nil {
 		g.HTTPError(http.StatusServiceUnavailable)
 		return
