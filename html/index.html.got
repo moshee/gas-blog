@@ -8,11 +8,11 @@
 	<section id=main>
 		<header id=header>
 			<h1>Things and Stuff</h1>
-			<h2>by moshee <a href="https://twitter.com/moshee"><img src="/assets/twitter.svg"></a><a href="https://github.com/moshee"><img src="/assets/github.svg"></a></h2>
+			<h2>by moshee <a href="https://twitter.com/moshee"><img src="/static/twitter.svg"></a><a href="https://github.com/moshee"><img src="/static/github.svg"></a></h2>
 		</header>
 		{{range .}}<article>
 			<h1>{{.Title}}</h1>
-			<div class=timestamp>Posted on <time>{{.Timestamp}}</time></div>
+			<div class=timestamp>Posted on <time>{{.Time}}</time></div>
 			<div class=comment-pointer>{{.Id}}</div>
 			<p>{{.Body}}</p>
 		</article>{{end}}
