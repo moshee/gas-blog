@@ -6,7 +6,6 @@
 </head>
 <body>
 	<section id=main>
-		<header id=header><h1>A blog by moshee</h1><h2>About things and stuff</h2></header>
 		<article>
 			<h1>{{.Title}}</h1>
 			<div class=timestamp>Posted on <time>{{.Timestamp}}</time></div>
