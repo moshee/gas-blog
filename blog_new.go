@@ -27,12 +27,20 @@ func db() *sql.DB {
 func SinglePost(g *gas.Gas, id string) {
 	row := db().QueryRow("SELECT * FROM posts WHERE id = ?", id)
 
-	post := &Post{}
-	if err := row.Scan(&post.Id, &post.Time, &post.Title, &post.Body); err != nil {
+	var (
+		id		int64
+		stamp	string
+		title	string
+		body	string
+	)
+
+	err = row.Scan(&id, &stamp, &title, &body)
+	if err != nil {
 		g.HTTPError(http.StatusServiceUnavailable)
+		return
 	}
 
-	g.Render("blog/onepost", post)
+	g.Render("blog/onepost", &Post{id, stamp, title, body})
 }
 
 func Page(g *gas.Gas, page string) {
@@ -45,15 +53,25 @@ func Page(g *gas.Gas, page string) {
 	}
 	posts := make([]*Post, 10)
 	for i := 0; rows.Next(); i++ {
-		err = rows.Scan(&posts[i].Id, &posts[i].Time, &posts[i].Title, &posts[i].Body)
+		var (
+			id		int64
+			stamp	string
+			title	string
+			body	string
+		)
+
+		err = rows.Scan(&id, &stamp, &title, &body)
 		if err != nil {
 			g.HTTPError(http.StatusServiceUnavailable)
+			return
 		}
+		posts[i] = &Post{id, stamp, title, body}
 	}
 
 	g.Render("blog/index", posts)
 }
 
+// TODO: add pagination
 func Index(g *gas.Gas) {
 	rows, err := db().Query("SELECT * FROM posts ORDER BY id DESC LIMIT 10")
 
@@ -65,6 +83,7 @@ func Index(g *gas.Gas) {
 
 	posts := make([]*Post, 10)
 	for i := 0; rows.Next(); i++ {
+		// TODO: better way to do this?
 		var (
 			id		int64
 			stamp	string
@@ -76,6 +95,8 @@ func Index(g *gas.Gas) {
 		if err != nil {
 			log.Printf("rows.Scan(): %v", err)
 			g.HTTPError(http.StatusServiceUnavailable)
+			// TODO: make it so you don't have to return on error
+			// (add panic() and recover()?)
 			return
 		}
 		posts[i] = &Post{id, stamp, title, body}
