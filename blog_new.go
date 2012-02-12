@@ -7,11 +7,13 @@ import (
 	"gas"
 	"log"
 	"strconv"
+	"strings"
+	"time"
 )
 
 type Post struct {
 	Id		int64
-	Time	string
+	Time	time.Time
 	Title	string
 	Body	string
 }
@@ -24,8 +26,12 @@ func db() *sql.DB {
 	return database
 }
 
+func sqlEsc(in string) string {
+	return strings.Replace(in, "'", "''", -1)
+}
+
 func SinglePost(g *gas.Gas, postId string) {
-	row := db().QueryRow("SELECT * FROM posts WHERE id = ?", postId)
+	row := db().QueryRow("SELECT * FROM posts WHERE id = $1", postId)
 
 	var (
 		id		int64
@@ -36,23 +42,35 @@ func SinglePost(g *gas.Gas, postId string) {
 
 	err := row.Scan(&id, &stamp, &title, &body)
 	if err != nil {
+		log.Printf("blog.SinglePost(): %v", err)
 		g.HTTPError(http.StatusServiceUnavailable)
 		return
 	}
 
-	g.Render("blog/onepost", &Post{id, stamp, title, body})
+	timestamp, _ := time.Parse("2006-01-02 15:04:05", stamp)
+	g.Render("blog/onepost", &Post{id, timestamp, title, body})
+}
+
+func NewPost(g *gas.Gas) {
+	switch g.Method {
+	case "POST":
+		g.Render("blog/onepost", &Post{0, time.Now(), g.FormValue("title"), g.FormValue("body")})
+	case "GET":
+		g.Render("blog/newpost", nil)
+	}
 }
 
 func Page(g *gas.Gas, page string) {
 	pageId, _ := strconv.Atoi(page)
-	rows, err := db().Query("SELECT * FROM posts ORDER BY id DESC OFFSET ? LIMIT 10", pageId*10)
+	rows, err := db().Query("SELECT * FROM posts ORDER BY id DESC OFFSET $1 LIMIT 10", pageId*10)
 
 	if err != nil {
 		log.Printf("blog.Page(): %v", err)
 		g.HTTPError(http.StatusServiceUnavailable)
 	}
-	posts := make([]*Post, 10)
-	for i := 0; rows.Next(); i++ {
+
+	posts := []*Post{}
+	for rows.Next() {
 		var (
 			id		int64
 			stamp	string
@@ -65,7 +83,8 @@ func Page(g *gas.Gas, page string) {
 			g.HTTPError(http.StatusServiceUnavailable)
 			return
 		}
-		posts[i] = &Post{id, stamp, title, body}
+		timestamp, _ := time.Parse("2006-01-02 15:04:05", stamp)
+		posts = append(posts, &Post{id, timestamp, title, body})
 	}
 
 	g.Render("blog/index", posts)
@@ -81,8 +100,8 @@ func Index(g *gas.Gas) {
 		return
 	}
 
-	posts := make([]*Post, 10)
-	for i := 0; rows.Next(); i++ {
+	posts := []*Post{}
+	for rows.Next() {
 		// TODO: better way to do this?
 		var (
 			id		int64
@@ -99,7 +118,8 @@ func Index(g *gas.Gas) {
 			// (add panic() and recover()?)
 			return
 		}
-		posts[i] = &Post{id, stamp, title, body}
+		timestamp, _ := time.Parse("2006-01-02 15:04:05", stamp)
+		posts = append(posts, &Post{id, timestamp, title, body})
 	}
 
 	g.Render("blog/index", posts)
