@@ -18,12 +18,14 @@ type Post struct {
 	Body	string
 }
 
-func db() *sql.DB {
-	database, err := sql.Open("postgres", "user=postgres dbname=postgres")
+var DB *sql.DB
+
+func init() {
+	var err error
+	DB, err = sql.Open("postgres", "user=postgres dbname=postgres")
 	if err != nil {
 		panic(err)
 	}
-	return database
 }
 
 func sqlEsc(in string) string {
@@ -31,7 +33,7 @@ func sqlEsc(in string) string {
 }
 
 func SinglePost(g *gas.Gas, postId string) {
-	row := db().QueryRow("SELECT * FROM posts WHERE id = $1", postId)
+	row := DB.QueryRow("SELECT * FROM posts WHERE id = $1", postId)
 
 	var (
 		id		int64
@@ -53,16 +55,22 @@ func SinglePost(g *gas.Gas, postId string) {
 
 func NewPost(g *gas.Gas) {
 	switch g.Method {
-	case "POST":
-		g.Render("blog/onepost", &Post{0, time.Now(), g.FormValue("title"), g.FormValue("body")})
 	case "GET":
 		g.Render("blog/newpost", nil)
+	case "POST":
+		now := time.Now().Format("2006-01-02 15:04:05")
+		_, err := DB.Exec("INSERT INTO posts (timestamp, title, body) VALUES ('$1', '$2', '$3')",
+			now, g.FormValue("title"), g.FormValue("body"))
+		if err != nil {
+			log.Print(err)
+		}
+		http.Redirect(g.ResponseWriter, g.Request, "/blog/", http.StatusFound)
 	}
 }
 
 func Page(g *gas.Gas, page string) {
 	pageId, _ := strconv.Atoi(page)
-	rows, err := db().Query("SELECT * FROM posts ORDER BY id DESC OFFSET $1 LIMIT 10", pageId*10)
+	rows, err := DB.Query("SELECT * FROM posts ORDER BY id DESC OFFSET $1 LIMIT 10", pageId*10)
 
 	if err != nil {
 		log.Printf("blog.Page(): %v", err)
@@ -92,7 +100,7 @@ func Page(g *gas.Gas, page string) {
 
 // TODO: add pagination
 func Index(g *gas.Gas) {
-	rows, err := db().Query("SELECT * FROM posts ORDER BY id DESC LIMIT 10")
+	rows, err := DB.Query("SELECT * FROM posts ORDER BY id DESC LIMIT 10")
 
 	if err != nil {
 		log.Printf("blog.Index(): %v", err)
