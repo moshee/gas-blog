@@ -27,7 +27,7 @@ Database support will probably come with gas instead of per plugin in the future
 ## TODO
 
 - All of the javascripts
-	- Perhaps an animated background with <canvas>
+	- Perhaps an animated background with canvas
 - The new post page
 - Pagination
 - More links and stuff
