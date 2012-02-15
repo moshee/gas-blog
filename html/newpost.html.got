@@ -1,0 +1,35 @@
+<!doctype html public "<!doctype html">
+<head>
+  <meta charset=utf-8>
+  <title>New Post</title>
+  <link rel=stylesheet href=/static/blog.css>
+</head>
+<body id=new-post>
+  <section>
+    <header id=new-post-header>
+      <h1>Create a new post</h1>
+    </header>
+    <form action="/blog/post/new/" method="post" enctype="application/x-www-form-urlencoded">
+      <input type=text name=title placeholder=Title>
+      <textarea name=body placeholder="Body text"></textarea>
+      <input type=submit value=Preview>
+    </form>
+    <section id=preview></section>
+  </section>
+</body>
+<!--
+There will be a real-time markup parser implemented in JS.
+It will actively search for image links. And other upload links.
+I'm not sure how this will be implemented in the markup.
+Each time it detects a file upload, an upload file thing will be appended to the form.
+It may also actively search for errors.
+-->
+
+<!--
+There will be no "post" button. Just a "preview" button.
+There will be a box on the bottom that appears via JS.
+It will send the current data stored in the form and use blog/onepost to render a test page.
+It will acquire the test page using XHR.
+This will be the preview mechanism.
+Once the post has been previewed, the real "post" button will appear.
+-->

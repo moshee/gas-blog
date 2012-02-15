@@ -1,24 +1,11 @@
-<!doctype html public "<!doctype html">
-<head>
-  <meta charset=utf-8>
-  <title>displaynone blog</title>
-  <link rel=stylesheet href="http://fonts.googleapis.com/css?family=Crimson+Text:400,400italic">
-  <link rel=stylesheet href="/static/blog.css?">
-</head>
-<body>
-  <section id=main>
-    <header id=header>
-      <h1><code>display: none;</code></h1>
-      <h2>by moshee <a href="https://twitter.com/tehmoshee"><img src="/static/twitter.svg"></a><a href="https://github.com/moshee"><img src="/static/github.svg"></a></h2>
-    </header>
-    {{range .}}<article id="post{{.Id}}">
-      <time datetime="{{.Time}}" pubdate>
-        <div class=day>{{.Time.Day}} {{.Time.Month | printf "%.3s"}}</div>
-        <div class=year>{{.Time.Year}}</div>
-      </time>
-      <h1>{{.Title}}</h1>
-      <p>{{.Body}}</p>
-    </article>{{end}}
-    <footer id=footer>wat</footer>
-  </section>
-</body>
+{{template "header"}}
+{{range .}}
+<article id="post{{.Id}}">
+  <time title="{{.Time}}" datetime="{{.Time}}" pubdate>
+    <div class=day>{{.Time.Day}} {{.Time.Month | printf "%.3s"}}</div>
+    <div class=year>{{.Time.Year}}</div>
+  </time>
+  <h1>{{.Title}} <a href="/blog/post/{{.Id}}">∞</a></h1>
+  <p>{{.Body}}</p>
+</article>{{end}}
+{{template "footer"}}
