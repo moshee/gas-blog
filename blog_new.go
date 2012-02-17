@@ -1,6 +1,7 @@
 package blog
 
 import (
+	"github.com/russross/blackfriday"
 	_ "github.com/jbarham/gopgsqldriver"
 	"database/sql"
 	"net/http"
@@ -19,7 +20,7 @@ type Post struct {
 
 var (
 	DB *sql.DB
-	QuerySinglePost, QueryPage, QueryNewPost *sql.Stmt
+	QuerySinglePost, QueryPage, QueryNewPost, QueryEditPost *sql.Stmt
 )
 
 func init() {
@@ -31,28 +32,52 @@ func init() {
 	QuerySinglePost, _ = DB.Prepare("SELECT * FROM posts WHERE id = $1")
 	QueryPage, _ =  DB.Prepare("SELECT * FROM posts ORDER BY id DESC LIMIT 10 OFFSET $1")
 	QueryNewPost, _ = DB.Prepare("INSERT INTO posts (timestamp, title, body) VALUES ($1, $2, $3)")
+	QueryEditPost, _ = DB.Prepare("UPDATE posts SET body = $1 WHERE id = $2")
 }
 
-func SinglePost(g *gas.Gas, postId string) {
-	row := QuerySinglePost.QueryRow(postId)
+/////////////////////////////
+// Data-getters
+/////////////////////////////
 
-	var (
-		id		int64
-		stamp	string
-		title	string
-		body	string
-	)
+//func getPost(g *gas.Gas) *Post {
 
-	err := row.Scan(&id, &stamp, &title, &body)
+//}
+
+func getPosts(g *gas.Gas, postId interface{}) []*Post {
+	rows, err := QueryPage.Query(postId)
+
 	if err != nil {
-		log.Printf("blog.SinglePost(): %v", err)
 		g.ErrorPage(http.StatusServiceUnavailable)
-		return
+		panic(err)
 	}
 
-	timestamp, _ := time.Parse("2006-01-02 15:04:05-07", stamp)
-	g.Render("blog/onepost", &Post{id, timestamp, title, body})
+	posts := []*Post{}
+	for rows.Next() {
+		// TODO: better way to do this?
+		var (
+			id		int64
+			stamp	string
+			title	string
+			body	[]byte
+		)
+
+		err = rows.Scan(&id, &stamp, &title, &body)
+		if err != nil {
+			g.ErrorPage(http.StatusServiceUnavailable)
+			// TODO: make it so you don't have to return on error
+			// (add panic() and recover()?)
+			panic(err)
+		}
+		timestamp, _ := time.Parse("2006-01-02 15:04:05-07", stamp)
+		posts = append(posts, &Post{id, timestamp, title, string(blackfriday.MarkdownCommon(body))})
+	}
+
+	return posts
 }
+
+/////////////////////////////
+// Actions
+/////////////////////////////
 
 func NewPost(g *gas.Gas) {
 	switch g.Method {
@@ -66,38 +91,65 @@ func NewPost(g *gas.Gas) {
 			return
 		}
 		http.Redirect(g.ResponseWriter, g.Request, "/blog/", http.StatusFound)
+	}
+}
+
+//func PreviewPost(g *gas.Gas) {
+
+
+func EditPost(g *gas.Gas, postId string) {
+	switch g.Method {
+	case "GET":
+		row := QuerySinglePost.QueryRow(postId)
+		var (
+			id int64
+			stamp, title string
+			body string
+		)
+		err := row.Scan(&id, &stamp, &title, &body)
+		if err != nil {
+			log.Printf("blog.EditPost(): %v", err)
+			g.ErrorPage(http.StatusServiceUnavailable)
+			return
+		}
+
+		timestamp, _ := time.Parse("2006-01-02 15:04:05-07", stamp)
+		g.Render("blog/editpost", &Post{id, timestamp, title, body})
+
+	case "POST":
+		QueryEditPost.Exec(g.FormValue("body"), postId)
+		http.Redirect(g.ResponseWriter, g.Request, "/blog/", http.StatusFound)
+	}
+
+}
+
+func SinglePost(g *gas.Gas, postId string) {
+	row := QuerySinglePost.QueryRow(postId)
+
+	var (
+		id		int64
+		stamp	string
+		title	string
+		body	[]byte
+	)
+
+	err := row.Scan(&id, &stamp, &title, &body)
+	if err != nil {
+		log.Printf("blog.SinglePost(): %v", err)
+		g.ErrorPage(http.StatusServiceUnavailable)
 		return
 	}
+
+	timestamp, _ := time.Parse("2006-01-02 15:04:05-07", stamp)
+	g.Render("blog/onepost", &Post{id, timestamp, title, string(blackfriday.MarkdownCommon(body))})
 }
 
 func Page(g *gas.Gas, page string) {
 	pageId, _ := strconv.Atoi(page)
-	rows, err := QueryPage.Query(pageId * 10)
-
-	if err != nil {
-		log.Printf("blog.Page(): %v", err)
-		g.ErrorPage(http.StatusServiceUnavailable)
-	}
-
-	posts := []*Post{}
-	for rows.Next() {
-		var (
-			id		int64
-			stamp	string
-			title	string
-			body	string
-		)
-
-		err = rows.Scan(&id, &stamp, &title, &body)
-		if err != nil {
-			g.ErrorPage(http.StatusServiceUnavailable)
-			return
-		}
-		timestamp, _ := time.Parse("2006-01-02 15:04:05-07", stamp)
-		posts = append(posts, &Post{id, timestamp, title, body})
-	}
+	posts := getPosts(g, pageId)
 	if len(posts) < 1 {
 		g.ErrorPage(http.StatusNotFound)
+		return
 	}
 
 	g.Render("blog/index", posts)
@@ -107,36 +159,11 @@ func Page(g *gas.Gas, page string) {
 func Index(g *gas.Gas) {
 	// Note to self: use `SELECT setval('posts_id_seq', currval('posts_id_seq')-1);`
 	// when deleting a row so that the index gets set properly
-	rows, err := QueryPage.Query("0")
 
-	if err != nil {
-		log.Printf("blog.Index(): %v", err)
-		g.ErrorPage(http.StatusServiceUnavailable)
-		return
-	}
-
-	posts := []*Post{}
-	for rows.Next() {
-		// TODO: better way to do this?
-		var (
-			id		int64
-			stamp	string
-			title	string
-			body	string
-		)
-
-		err = rows.Scan(&id, &stamp, &title, &body)
-		if err != nil {
-			log.Printf("rows.Scan(): %v", err)
-			g.ErrorPage(http.StatusServiceUnavailable)
-			// TODO: make it so you don't have to return on error
-			// (add panic() and recover()?)
-			return
-		}
-		timestamp, _ := time.Parse("2006-01-02 15:04:05-07", stamp)
-		posts = append(posts, &Post{id, timestamp, title, body})
-	}
-
-	g.Render("blog/index", posts)
+	g.Render("blog/index", getPosts(g, "0"))
 }
 
+func RSS(g *gas.Gas) {
+	g.ResponseWriter.Header().Set("Content-Type", "application/rss+xml")
+	g.Render("blog/rss", getPosts(g, "0"))
+}

@@ -1,0 +1,13 @@
+<rss version="2.0">
+ <channel>
+  <title>displaynone.us</title>
+  <description>The blog of moshee - programmer, engineer, learner</description>
+  <language>en-us</language>
+  {{range .}}<item>
+   <title>{{.Title | html}}</title>
+   <link>http://displaynone.us/blog/post/{{.Id}}</link>
+   <description>{{.Body | printf "%.300s" | html}}</description>
+   <pubDate>{{.Time}}</pubDate>
+  </item>{{end}}
+ </channel>
+</rss>
