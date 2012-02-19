@@ -16,6 +16,7 @@ type Post struct {
 	Time	time.Time
 	Title	string
 	Body	string
+	Tag		string
 }
 
 var (
@@ -31,7 +32,7 @@ func init() {
 	}
 	QuerySinglePost, _ = DB.Prepare("SELECT * FROM posts WHERE id = $1")
 	QueryPage, _ =  DB.Prepare("SELECT * FROM posts ORDER BY id DESC LIMIT 10 OFFSET $1")
-	QueryNewPost, _ = DB.Prepare("INSERT INTO posts (timestamp, title, body) VALUES ($1, $2, $3)")
+	QueryNewPost, _ = DB.Prepare("INSERT INTO posts (timestamp, title, body, tag) VALUES ($1, $2, $3, $4)")
 	QueryEditPost, _ = DB.Prepare("UPDATE posts SET body = $1 WHERE id = $2")
 }
 
@@ -59,9 +60,10 @@ func getPosts(g *gas.Gas, postId interface{}) []*Post {
 			stamp	string
 			title	string
 			body	[]byte
+			tag		string
 		)
 
-		err = rows.Scan(&id, &stamp, &title, &body)
+		err = rows.Scan(&id, &stamp, &title, &body, &tag)
 		if err != nil {
 			g.ErrorPage(http.StatusServiceUnavailable)
 			// TODO: make it so you don't have to return on error
@@ -69,7 +71,7 @@ func getPosts(g *gas.Gas, postId interface{}) []*Post {
 			panic(err)
 		}
 		timestamp, _ := time.Parse("2006-01-02 15:04:05-07", stamp)
-		posts = append(posts, &Post{id, timestamp, title, string(blackfriday.MarkdownCommon(body))})
+		posts = append(posts, &Post{id, timestamp, title, string(blackfriday.MarkdownCommon(body)), tag})
 	}
 
 	return posts
@@ -85,7 +87,7 @@ func NewPost(g *gas.Gas) {
 		g.Render("blog/newpost", nil)
 	case "POST":
 		now := time.Now().Format("2006-01-02 15:04:05-07")
-		_, err := QueryNewPost.Exec(now, g.FormValue("title"), g.FormValue("body"))
+		_, err := QueryNewPost.Exec(now, g.FormValue("title"), g.FormValue("body"), g.FormValue("tag"))
 		if err != nil {
 			log.Print(err)
 			return
@@ -103,10 +105,11 @@ func EditPost(g *gas.Gas, postId string) {
 		row := QuerySinglePost.QueryRow(postId)
 		var (
 			id int64
+			tag string
 			stamp, title string
 			body string
 		)
-		err := row.Scan(&id, &stamp, &title, &body)
+		err := row.Scan(&id, &stamp, &title, &body, &tag)
 		if err != nil {
 			log.Printf("blog.EditPost(): %v", err)
 			g.ErrorPage(http.StatusServiceUnavailable)
@@ -114,7 +117,7 @@ func EditPost(g *gas.Gas, postId string) {
 		}
 
 		timestamp, _ := time.Parse("2006-01-02 15:04:05-07", stamp)
-		g.Render("blog/editpost", &Post{id, timestamp, title, body})
+		g.Render("blog/editpost", &Post{id, timestamp, title, body, tag})
 
 	case "POST":
 		QueryEditPost.Exec(g.FormValue("body"), postId)
@@ -131,9 +134,10 @@ func SinglePost(g *gas.Gas, postId string) {
 		stamp	string
 		title	string
 		body	[]byte
+		tag		string
 	)
 
-	err := row.Scan(&id, &stamp, &title, &body)
+	err := row.Scan(&id, &stamp, &title, &body, &tag)
 	if err != nil {
 		log.Printf("blog.SinglePost(): %v", err)
 		g.ErrorPage(http.StatusServiceUnavailable)
@@ -141,7 +145,7 @@ func SinglePost(g *gas.Gas, postId string) {
 	}
 
 	timestamp, _ := time.Parse("2006-01-02 15:04:05-07", stamp)
-	g.Render("blog/onepost", &Post{id, timestamp, title, string(blackfriday.MarkdownCommon(body))})
+	g.Render("blog/onepost", &Post{id, timestamp, title, string(blackfriday.MarkdownCommon(body)), tag})
 }
 
 func Page(g *gas.Gas, page string) {
