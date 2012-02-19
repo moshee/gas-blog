@@ -1,13 +1,14 @@
 {{template "header"}}
-<link rel=alternate type=application/rss+xml title=RSS href=/blog/rss>
 {{template "body"}}
-{{range .}}
-<article id="post{{.Id}}">
+<article>
+<h1><span style="color:#888">Editing:</span> {{.Title}}</h1>
 <time class=ball title="{{.Time}}" datetime="{{.Time}}" pubdate>
 <span class=day>{{.Time.Day}} {{.Time.Month | printf "%.3s"}}</span><span class=year>{{.Time.Year}}</span>
 </time>
 <div class="ball tag {{.Tag}}"></div>
-<h1>{{.Title}} <a href="/blog/post/{{.Id}}">∞</a></h1>
-{{.Body}}
-</article>{{end}}
+<form id=edit-post action="/blog/edit/{{.Id}}/" method="post" enctype="application/x-www-form-urlencoded">
+<textarea name=body autofocus>{{.Body}}</textarea>
+<input type=submit value=Post>
+</form>
+</article>
 {{template "footer"}}

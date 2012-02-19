@@ -2,16 +2,51 @@
 <head>
   <meta charset=utf-8>
   <title>New Post</title>
+  <script>
+  function grab_preview_text(from_form, to_form) {
+    var from_title = from_form.querySelector('[name=title]');
+    var from_body = from_form.querySelector('[name=body]');
+    var	to_title = to_form.querySelector('[name=title]');
+    var to_body = to_form.querySelector('[name=body]');
+    to_title.innerText = from_title.innerText;
+    to_body.innerText = from_body.innerText;
+  }
+
+  function xhr_get(method, url, data) {
+    var x = new XMLHttpRequest();
+    x.onreadystatechange = function() {
+      if (x.readyState == 4 && x.status == 200) {
+        return x.responseText;
+      }
+    }
+    x.open(method, url, true);
+    x.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    x.send(data);
+  }
+
+  function preview() {
+    var title = document.querySelector('input[name=title]').innerText;
+    var body = document.querySelector('textarea[name=body]').innerText;
+    var preview_box = document.querySelector('#preview');
+    response = xhr_get('POST', '/blog/post/new', 'action=preview&title=' + title + '&body=' + body);
+    preview_box.innerHTML = response;
+  }
+  </script>
   <link rel=stylesheet href=/static/blog.css>
 </head>
 <body id=new-post>
   <section>
-    <header id=new-post-header>
+    <form id=post-area action="/blog/post/new/" method="post" enctype="application/x-www-form-urlencoded">
       <h1>Create a new post</h1>
-    </header>
-    <form action="/blog/post/new/" method="post" enctype="application/x-www-form-urlencoded">
-      <input type=text name=title placeholder=Title>
-      <textarea name=body placeholder="Body text"></textarea>
+      <input type=radio name=tag value=random checked>
+      <input type=radio name=tag value=programming>
+      <input type=radio name=tag value=profile>
+      <input type=radio name=tag value=storytime>
+      <input type=radio name=tag value=anime>
+      <input type=radio name=tag value=electronics>
+      <input type=text name=title placeholder=Title autofocus required>
+      <textarea name=body placeholder="Body text" required></textarea>
+      {{/*<button onclick="preview()">Preview</button>*/}}
       <input type=submit value=Preview>
     </form>
     <section id=preview></section>

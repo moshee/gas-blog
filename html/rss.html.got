@@ -7,6 +7,7 @@
    <title>{{.Title | html}}</title>
    <link>http://displaynone.us/blog/post/{{.Id}}</link>
    <description>{{.Body | printf "%.300s" | html}}</description>
+   <category>{{.Tag}}</category>
    <pubDate>{{.Time}}</pubDate>
   </item>{{end}}
  </channel>

@@ -1,10 +1,10 @@
 {{template "header"}}
+{{template "body"}}
 <article>
-  <h1>{{.Title}}</h1>
-  <time datetime="{{.Time}}" pubdate>
-    <div class=day>{{.Time.Day}} {{.Time.Month | printf "%.3s"}}</div>
-    <div class=year>{{.Time.Year}}</div>
-  </time>
-  <p>{{.Body}}</p>
+<h1>{{.Title}}</h1>
+<time datetime="{{.Time}}" pubdate>
+<span class=day>{{.Time.Day}} {{.Time.Month | printf "%.3s"}}</span><span class=year>{{.Time.Year}}</span>
+</time>
+{{.Body}}
 </article>
 {{template "footer"}}
