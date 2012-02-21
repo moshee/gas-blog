@@ -68,7 +68,7 @@ func getPosts(g *gas.Gas, postId interface{}) []*Post {
 			g.ErrorPage(http.StatusServiceUnavailable)
 			// TODO: make it so you don't have to return on error
 			// (add panic() and recover()?)
-			panic(err)
+//			panic(err)
 		}
 		timestamp, _ := time.Parse("2006-01-02 15:04:05-07", stamp)
 		posts = append(posts, &Post{id, timestamp, title, string(blackfriday.MarkdownCommon(body)), tag})
@@ -113,7 +113,6 @@ func EditPost(g *gas.Gas, postId string) {
 		if err != nil {
 			log.Printf("blog.EditPost(): %v", err)
 			g.ErrorPage(http.StatusServiceUnavailable)
-			return
 		}
 
 		timestamp, _ := time.Parse("2006-01-02 15:04:05-07", stamp)
@@ -141,7 +140,6 @@ func SinglePost(g *gas.Gas, postId string) {
 	if err != nil {
 		log.Printf("blog.SinglePost(): %v", err)
 		g.ErrorPage(http.StatusServiceUnavailable)
-		return
 	}
 
 	timestamp, _ := time.Parse("2006-01-02 15:04:05-07", stamp)
@@ -153,7 +151,6 @@ func Page(g *gas.Gas, page string) {
 	posts := getPosts(g, pageId)
 	if len(posts) < 1 {
 		g.ErrorPage(http.StatusNotFound)
-		return
 	}
 
 	g.Render("blog/index", posts)
