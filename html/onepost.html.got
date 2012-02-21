@@ -2,9 +2,10 @@
 {{template "body"}}
 <article>
 <h1>{{.Title}}</h1>
-<time datetime="{{.Time}}" pubdate>
+<time class=ball title="{{.Time}}" datetime="{{.Time}}" pubdate>
 <span class=day>{{.Time.Day}} {{.Time.Month | printf "%.3s"}}</span><span class=year>{{.Time.Year}}</span>
 </time>
+<div class="ball tag {{.Tag}}"></div>
 {{.Body}}
 </article>
 {{template "footer"}}

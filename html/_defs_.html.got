@@ -1,14 +1,15 @@
 {{define "header"}}<!doctype html public "<!doctype html">
 <head>
 <meta charset=utf-8>
+<meta name=robots content=noindex,nofollow,noarchive,nosnippet,noodp>
 <title>displaynone blog{{if .Title}} - {{.Title}}{{end}}</title>
-<script src=/static/canvas.js></script>
 <link rel=icon type=image/png href=/static/favicon.png>
 <link rel=apple-touch-icon-precomposed href=/static/touch-icon.png>
 <link rel=apple-touch-icon-precomposed sizes=72x72 href=/static/touch-icon-ipad.png>
 <link rel=apple-touch-icon-precomposed sizes=114x114 href=/static/touch-icon-iphone4.png>
 <link rel=stylesheet href="http://fonts.googleapis.com/css?family=Crimson+Text:400,400italic">
-<link rel=stylesheet href="/static/blog.css">{{end}}
+<link rel=stylesheet href="/static/blog.min.css">
+<script src=/static/canvas.js></script>{{end}}
 
 {{define "body"}}</head>
 <body>

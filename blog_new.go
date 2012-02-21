@@ -1,27 +1,30 @@
 package blog
 
 import (
-	"github.com/russross/blackfriday"
-	_ "github.com/jbarham/gopgsqldriver"
 	"database/sql"
-	"net/http"
 	"gas"
+	_ "github.com/jbarham/gopgsqldriver"
+	"github.com/russross/blackfriday"
 	"log"
+	"net/http"
 	"strconv"
 	"time"
 )
 
 type Post struct {
-	Id		int64
-	Time	time.Time
-	Title	string
-	Body	string
-	Tag		string
+	Id    int64
+	Time  time.Time
+	Title string
+	Body  string
+	Tag   string
 }
 
 var (
-	DB *sql.DB
-	QuerySinglePost, QueryPage, QueryNewPost, QueryEditPost *sql.Stmt
+	DB              *sql.DB
+	QuerySinglePost *sql.Stmt
+	QueryPage       *sql.Stmt
+	QueryNewPost    *sql.Stmt
+	QueryEditPost   *sql.Stmt
 )
 
 func init() {
@@ -31,7 +34,7 @@ func init() {
 		panic(err)
 	}
 	QuerySinglePost, _ = DB.Prepare("SELECT * FROM posts WHERE id = $1")
-	QueryPage, _ =  DB.Prepare("SELECT * FROM posts ORDER BY id DESC LIMIT 10 OFFSET $1")
+	QueryPage, _ = DB.Prepare("SELECT * FROM posts ORDER BY id DESC LIMIT 10 OFFSET $1")
 	QueryNewPost, _ = DB.Prepare("INSERT INTO posts (timestamp, title, body, tag) VALUES ($1, $2, $3, $4)")
 	QueryEditPost, _ = DB.Prepare("UPDATE posts SET body = $1 WHERE id = $2")
 }
@@ -56,19 +59,16 @@ func getPosts(g *gas.Gas, postId interface{}) []*Post {
 	for rows.Next() {
 		// TODO: better way to do this?
 		var (
-			id		int64
-			stamp	string
-			title	string
-			body	[]byte
-			tag		string
+			id    int64
+			stamp string
+			title string
+			body  []byte
+			tag   string
 		)
 
 		err = rows.Scan(&id, &stamp, &title, &body, &tag)
 		if err != nil {
 			g.ErrorPage(http.StatusServiceUnavailable)
-			// TODO: make it so you don't have to return on error
-			// (add panic() and recover()?)
-//			panic(err)
 		}
 		timestamp, _ := time.Parse("2006-01-02 15:04:05-07", stamp)
 		posts = append(posts, &Post{id, timestamp, title, string(blackfriday.MarkdownCommon(body)), tag})
@@ -98,16 +98,15 @@ func NewPost(g *gas.Gas) {
 
 //func PreviewPost(g *gas.Gas) {
 
-
 func EditPost(g *gas.Gas, postId string) {
 	switch g.Method {
 	case "GET":
 		row := QuerySinglePost.QueryRow(postId)
 		var (
-			id int64
-			tag string
+			id           int64
+			tag          string
 			stamp, title string
-			body string
+			body         string
 		)
 		err := row.Scan(&id, &stamp, &title, &body, &tag)
 		if err != nil {
@@ -129,11 +128,11 @@ func SinglePost(g *gas.Gas, postId string) {
 	row := QuerySinglePost.QueryRow(postId)
 
 	var (
-		id		int64
-		stamp	string
-		title	string
-		body	[]byte
-		tag		string
+		id    int64
+		stamp string
+		title string
+		body  []byte
+		tag   string
 	)
 
 	err := row.Scan(&id, &stamp, &title, &body, &tag)
